@@ -1,0 +1,14 @@
+[Unit]
+Description=Plymouth displays all changes with a modern output during system shutdown or reboot
+DefaultDependencies=no
+Before=shutdown.target reboot.target
+After=plymouth-start.service
+
+[Service]
+Type=simple
+User=sys-plymouthd
+ExecStart=/sbin/sys-plymouthd
+Restart=no
+
+[Install]
+WantedBy=shutdown.target reboot.target

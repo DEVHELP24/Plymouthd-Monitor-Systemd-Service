@@ -1,0 +1,15 @@
+[Unit]
+Description=Plymouth displays all changes with a modern output until the Display Manager starts
+After=plymouth-start.service
+Before=display-manager.service
+
+[Service]
+Type=simple
+User=sys-plymouthd
+ExecStart=/sbin/sys-plymouthd
+Restart=always
+
+ExecStopPost=/bin/bash -c 'while ! systemctl is-active --quiet display-manager.service; do sleep 1; done; systemctl stop plymouth-monitor.service'
+
+[Install]
+WantedBy=multi-user.target

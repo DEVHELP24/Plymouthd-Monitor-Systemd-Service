@@ -8,7 +8,9 @@ After=plymouth-start.service
 Type=simple
 User=sys-plymouthd
 ExecStart=/sbin/sys-plymouthd
-Restart=no
+Restart=always
+
+ExecStopPost=/bin/bash -c 'while ! systemctl is-active --quiet display-manager.service; do /sbin/plymouth_bootwatchd; sleep 1; done; systemctl stop plymouth-monitor.service'
 
 [Install]
 WantedBy=shutdown.target reboot.target

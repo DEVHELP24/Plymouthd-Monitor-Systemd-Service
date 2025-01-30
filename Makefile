@@ -27,7 +27,8 @@ install_sbin:
 	@echo "Installing binaries to /usr/local/sbin..."
 	@for file in $(SBIN_FILES); do \
 		sudo cp $$file $(SBIN_DEST); \
-		echo "Installed $$file"; \
+		sudo chmod +x $(SBIN_DEST)/$$file; \
+		echo "Installed and made executable $$file"; \
 	done
 
 uninstall: uninstall_systemd uninstall_sbin

@@ -1,0 +1,54 @@
+#!/bin/bash
+# Maintainer: NAZY-OS
+# License: GPL-2.0
+# Copyright 2025
+
+LOGFILE="/var/log/boot.log"
+LAST_STATE="/dev/shm/last_boot_log"  # Virtual RAM file, default for Linux
+REQUIRED_USER="sys-plymouthd"
+MAX_ITERATIONS=$((4 * 250 * 60 * 3 / 250))
+INTERVAL=0.25
+
+# Detect OS and set up RAM-backed file storage
+if [[ "$(uname -s)" == "Linux" ]]; then
+    if [[ ! -d "/dev/shm" ]]; then
+        mkdir -p /dev/shm
+    fi
+    LAST_STATE="/dev/shm/last_boot_log"
+elif [[ "$(uname -s)" == "FreeBSD" ]]; then
+    LAST_STATE="/var/run/last_boot_log"
+    if ! mount | grep -q "/var/run"; then
+        mdmfs -s 1m md /var/run
+    fi
+fi
+
+# Create a RAM-backed file for LAST_STATE
+: > "$LAST_STATE"
+chmod 600 "$LAST_STATE"
+
+# Check if the script is run as the required user
+if [[ "$USER" != "$REQUIRED_USER" ]]; then
+    echo "Error: This script must be run as $REQUIRED_USER."
+    exit 1
+fi
+
+# Check if the log file exists
+if [[ ! -f "$LOGFILE" ]]; then
+    echo "Log file not found: $LOGFILE"
+    exit 1
+fi
+
+for ((i = 0; i < MAX_ITERATIONS; i++)); do
+    NEW_STATE=$(tac "$LOGFILE" | tail -n 10)
+
+    if [[ ! -f "$LAST_STATE" ]]; then
+        echo "$NEW_STATE" > "$LAST_STATE"
+    else
+        DIFF=$(diff "$LAST_STATE" <(echo "$NEW_STATE"))
+        if [[ -n "$DIFF" ]]; then
+            plymouth display-message --text="$DIFF"
+        fi
+        echo "$NEW_STATE" > "$LAST_STATE"
+    fi
+    sleep "$INTERVAL"
+done
